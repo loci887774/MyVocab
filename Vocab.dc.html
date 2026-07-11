@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  body { margin: 0; background: #ffffff; }
+  @keyframes cardIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+  a { color: {{ accent }}; }
+  a:hover { color: {{ accentDark }}; }
+</style>
+</helmet>
+<div style="min-height:100vh;background:#ffffff;font-family:'Inter',sans-serif;color:#1e293b;display:flex;flex-direction:column">
+
+  <div style="position:sticky;top:0;z-index:10;background:#ffffff;border-bottom:1px solid #e2e8f0;padding:20px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:36px;height:36px;border-radius:8px;background:{{ accent }};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;font-family:'Source Serif 4',serif">V</div>
+      <div style="font-family:'Source Serif 4',serif;font-weight:600;font-size:22px;color:#1e293b">Từ Vựng Của Tôi</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="display:flex;gap:4px;background:#f1f5f9;border-radius:10px;padding:4px">
+        <button style="padding:9px 18px;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;background:{{ tabBg.list }};color:{{ tabColor.list }}" style-hover="background:{{ tabBgHover.list }}" onClick="{{ goList }}">Danh sách</button>
+        <button style="padding:9px 18px;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;background:{{ tabBg.review }};color:{{ tabColor.review }}" style-hover="background:{{ tabBgHover.review }}" onClick="{{ goReview }}">Ôn tập</button>
+        <button style="padding:9px 18px;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;background:{{ tabBg.stats }};color:{{ tabColor.stats }}" style-hover="background:{{ tabBgHover.stats }}" onClick="{{ goStats }}">Thống kê</button>
+      </div>
+      <button onClick="{{ toggleDrive }}" style="padding:9px 16px;border:1px solid {{ driveButtonBorder }};border-radius:8px;background:{{ driveButtonBg }};color:{{ driveButtonColor }};font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">{{ driveButtonLabel }}</button>
+    </div>
+  </div>
+
+  <div style="flex:1;max-width:960px;width:100%;margin:0 auto;padding:32px;box-sizing:border-box">
+
+    <sc-if value="{{ isListScreen }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:20px">
+          <input type="text" placeholder="Tìm từ hoặc nghĩa..." value="{{ search }}" onChange="{{ onSearchChange }}" style="flex:1;min-width:200px;padding:12px 16px;border:1px solid #e2e8f0;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;background:#f8fafc;color:#1e293b;outline:none" />
+          <select value="{{ topicFilter }}" onChange="{{ onTopicFilterChange }}" style="padding:12px 14px;border:1px solid #e2e8f0;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;background:#f8fafc;color:#1e293b;outline:none">
+            <option value="all">Tất cả chủ đề</option>
+            <sc-for list="{{ topics }}" as="t" hint-placeholder-count="0">
+              <option value="{{ t }}">{{ t }}</option>
+            </sc-for>
+          </select>
+          <select value="{{ levelFilter }}" onChange="{{ onLevelFilterChange }}" style="padding:12px 14px;border:1px solid #e2e8f0;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;background:#f8fafc;color:#1e293b;outline:none">
+            <option value="all">Tất cả mức độ</option>
+            <option value="Cơ bản">Cơ bản</option>
+            <option value="Trung bình">Trung bình</option>
+            <option value="Nâng cao">Nâng cao</option>
+          </select>
+          <button onClick="{{ toggleAddForm }}" style="padding:12px 20px;border:none;border-radius:10px;background:{{ accent }};color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap">{{ addButtonLabel }}</button>
+        </div>
+
+        <sc-if value="{{ showAddForm }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:24px;margin-bottom:24px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div style="grid-column:1/2">
+              <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:6px">Từ</label>
+              <input type="text" value="{{ form.word }}" onChange="{{ onFormChange_word }}" placeholder="ví dụ: resilient" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1px solid #e2e8f0;border-radius:8px;font-family:'Inter',sans-serif;font-size:15px;background:#fff;outline:none" />
+            </div>
+            <sc-if value="{{ showIPA }}" hint-placeholder-val="{{ true }}">
+              <div>
+                <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:6px">Phiên âm IPA</label>
+                <input type="text" value="{{ form.ipa }}" onChange="{{ onFormChange_ipa }}" placeholder="/rɪˈzɪl.jənt/" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1px solid #e2e8f0;border-radius:8px;font-family:'Inter',sans-serif;font-size:15px;background:#fff;outline:none" />
+              </div>
+            </sc-if>
+            <div>
+              <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:6px">Loại từ</label>
+              <select value="{{ form.pos }}" onChange="{{ onFormChange_pos }}" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1px solid #e2e8f0;border-radius:8px;font-family:'Inter',sans-serif;font-size:15px;background:#fff;outline:none">
+                <option value="danh từ">danh từ</option>
+                <option value="động từ">động từ</option>
+                <option value="tính từ">tính từ</option>
+                <option value="trạng từ">trạng từ</option>
+                <option value="cụm từ">cụm từ</option>
+                <option value="khác">khác</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:6px">Mức độ</label>
+              <select value="{{ form.level }}" onChange="{{ onFormChange_level }}" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1px solid #e2e8f0;border-radius:8px;font-family:'Inter',sans-serif;font-size:15px;background:#fff;outline:none">
+                <option value="Cơ bản">Cơ bản</option>
+                <option value="Trung bình">Trung bình</option>
+                <option value="Nâng cao">Nâng cao</option>
+              </select>
+            </div>
+            <div style="grid-column:1/-1">
+              <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:6px">Nghĩa</label>
+              <input type="text" value="{{ form.meaning }}" onChange="{{ onFormChange_meaning }}" placeholder="có khả năng phục hồi nhanh" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1px solid #e2e8f0;border-radius:8px;font-family:'Inter',sans-serif;font-size:15px;background:#fff;outline:none" />
+            </div>
+            <div style="grid-column:1/-1">
+              <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:6px">Ví dụ</label>
+              <input type="text" value="{{ form.example }}" onChange="{{ onFormChange_example }}" placeholder="She is resilient in the face of setbacks." style="width:100%;box-sizing:border-box;padding:11px 14px;border:1px solid #e2e8f0;border-radius:8px;font-family:'Inter',sans-serif;font-size:15px;background:#fff;outline:none" />
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:6px">Chủ đề</label>
+              <input type="text" value="{{ form.topic }}" onChange="{{ onFormChange_topic }}" placeholder="Công việc, Du lịch..." style="width:100%;box-sizing:border-box;padding:11px 14px;border:1px solid #e2e8f0;border-radius:8px;font-family:'Inter',sans-serif;font-size:15px;background:#fff;outline:none" />
+            </div>
+            <div style="grid-column:1/-1;display:flex;gap:10px;justify-content:flex-end;margin-top:4px">
+              <button onClick="{{ cancelForm }}" style="padding:11px 20px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;color:#64748b;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer">Hủy</button>
+              <button onClick="{{ submitForm }}" style="padding:11px 20px;border:none;border-radius:8px;background:{{ accent }};color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer">{{ submitLabel }}</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ hasWords }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <sc-for list="{{ filteredWords }}" as="w" hint-placeholder-count="3">
+              <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:18px 20px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+                    <span style="font-family:'Source Serif 4',serif;font-size:20px;font-weight:600;color:#1e293b">{{ w.word }}</span>
+                    <sc-if value="{{ w.hasIpa }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-size:14px;color:#94a3b8;font-style:italic">{{ w.ipa }}</span>
+                    </sc-if>
+                    <span style="font-size:11px;font-weight:600;color:#64748b;background:#f1f5f9;padding:2px 8px;border-radius:6px">{{ w.pos }}</span>
+                  </div>
+                  <div style="font-size:15px;color:#334155;margin-top:6px">{{ w.meaning }}</div>
+                  <sc-if value="{{ w.hasExample }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:13px;color:#94a3b8;font-style:italic;margin-top:4px">"{{ w.example }}"</div>
+                  </sc-if>
+                  <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+                    <sc-if value="{{ w.hasTopic }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-size:11px;color:{{ accent }};background:{{ accentSoft }};padding:3px 9px;border-radius:6px;font-weight:600">{{ w.topic }}</span>
+                    </sc-if>
+                    <span style="font-size:11px;color:#64748b;background:#f1f5f9;padding:3px 9px;border-radius:6px">{{ w.level }}</span>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0">
+                  <button onClick="{{ w.toggleKnown }}" style="padding:6px 14px;border-radius:7px;border:1px solid {{ w.knownBorder }};background:{{ w.knownBg }};color:{{ w.knownColor }};font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">{{ w.knownLabel }}</button>
+                  <div style="display:flex;gap:10px">
+                    <button onClick="{{ w.edit }}" style="border:none;background:none;color:#64748b;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;padding:0">Sửa</button>
+                    <button onClick="{{ w.remove }}" style="border:none;background:none;color:#c2410c;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;padding:0">Xóa</button>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ noResultsAfterFilter }}" hint-placeholder-val="{{ false }}">
+          <div style="text-align:center;padding:60px 20px;color:#94a3b8;font-size:14px">Không tìm thấy từ phù hợp.</div>
+        </sc-if>
+        <sc-if value="{{ isEmptyOverall }}" hint-placeholder-val="{{ false }}">
+          <div style="text-align:center;padding:80px 20px">
+            <div style="font-family:'Source Serif 4',serif;font-size:20px;color:#334155;margin-bottom:8px">Chưa có từ nào</div>
+            <div style="font-size:14px;color:#94a3b8;margin-bottom:20px">Bắt đầu thêm từ vựng đầu tiên của bạn.</div>
+            <button onClick="{{ toggleAddForm }}" style="padding:12px 22px;border:none;border-radius:10px;background:{{ accent }};color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer">+ Thêm từ mới</button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isReviewScreen }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <sc-if value="{{ isEmptyOverall }}" hint-placeholder-val="{{ false }}">
+          <div style="text-align:center;padding:80px 20px">
+            <div style="font-family:'Source Serif 4',serif;font-size:20px;color:#334155;margin-bottom:8px">Chưa có từ để ôn tập</div>
+            <div style="font-size:14px;color:#94a3b8;margin-bottom:20px">Thêm vài từ ở tab Danh sách trước nhé.</div>
+            <button onClick="{{ goList }}" style="padding:12px 22px;border:none;border-radius:10px;background:{{ accent }};color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer">Đi tới Danh sách</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ hasWords }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;gap:12px;align-items:center;justify-content:center;margin-bottom:20px;flex-wrap:wrap">
+              <select value="{{ reviewTopicFilter }}" onChange="{{ onReviewTopicChange }}" style="padding:10px 14px;border:1px solid #e2e8f0;border-radius:10px;font-family:'Inter',sans-serif;font-size:13px;background:#f8fafc;color:#1e293b;outline:none">
+                <option value="all">Tất cả chủ đề</option>
+                <sc-for list="{{ topics }}" as="t" hint-placeholder-count="0">
+                  <option value="{{ t }}">{{ t }}</option>
+                </sc-for>
+              </select>
+              <select value="{{ reviewKnownFilter }}" onChange="{{ onReviewKnownChange }}" style="padding:10px 14px;border:1px solid #e2e8f0;border-radius:10px;font-family:'Inter',sans-serif;font-size:13px;background:#f8fafc;color:#1e293b;outline:none">
+                <option value="all">Tất cả trạng thái</option>
+                <option value="unknown">Chưa thuộc</option>
+                <option value="known">Đã thuộc</option>
+              </select>
+              <button onClick="{{ startReview }}" style="padding:10px 18px;border:none;border-radius:10px;background:{{ accent }};color:#fff;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer">Bắt đầu / Trộn lại</button>
+            </div>
+
+            <sc-if value="{{ reviewQueueEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="text-align:center;padding:60px 20px;color:#94a3b8;font-size:14px">Không có từ nào khớp bộ lọc này.</div>
+            </sc-if>
+
+            <sc-if value="{{ hasCurrentCard }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:22px">
+                <div style="font-size:13px;color:#94a3b8;font-weight:600">{{ progressLabel }}</div>
+                <div key="{{ cardKey }}" onClick="{{ flipCard }}" style="animation:cardIn 0.25s ease;width:100%;max-width:520px;min-height:280px;background:#fff;border:1px solid #e2e8f0;border-radius:20px;box-shadow:0 1px 3px rgba(30,41,59,0.06);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;cursor:pointer;text-align:center;box-sizing:border-box">
+                  <sc-if value="{{ isFront }}" hint-placeholder-val="{{ true }}">
+                    <div>
+                      <div style="font-family:'Source Serif 4',serif;font-size:36px;font-weight:600;color:#1e293b">{{ currentCard.word }}</div>
+                      <sc-if value="{{ currentCard.hasIpa }}" hint-placeholder-val="{{ false }}">
+                        <div style="font-size:16px;color:#94a3b8;font-style:italic;margin-top:10px">{{ currentCard.ipa }}</div>
+                      </sc-if>
+                      <div style="font-size:12px;color:#64748b;background:#f1f5f9;display:inline-block;padding:3px 10px;border-radius:6px;margin-top:14px">{{ currentCard.pos }}</div>
+                      <div style="font-size:12px;color:#94a3b8;margin-top:24px">Chạm để lật thẻ</div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ isBack }}" hint-placeholder-val="{{ false }}">
+                    <div>
+                      <div style="font-size:22px;font-weight:600;color:#1e293b">{{ currentCard.meaning }}</div>
+                      <sc-if value="{{ currentCard.hasExample }}" hint-placeholder-val="{{ false }}">
+                        <div style="font-size:15px;color:#64748b;font-style:italic;margin-top:14px">"{{ currentCard.example }}"</div>
+                      </sc-if>
+                      <div style="font-size:12px;color:#94a3b8;margin-top:24px">Chạm để lật lại</div>
+                    </div>
+                  </sc-if>
+                </div>
+
+                <div style="display:flex;gap:12px">
+                  <button onClick="{{ prevCard }}" style="padding:12px 20px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;color:#64748b;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer">← Trước</button>
+                  <button onClick="{{ markUnknown }}" style="padding:12px 22px;border:none;border-radius:10px;background:{{ dangerSoft }};color:{{ danger }};font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer">Chưa thuộc</button>
+                  <button onClick="{{ markKnown }}" style="padding:12px 22px;border:none;border-radius:10px;background:{{ successSoft }};color:{{ success }};font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer">Đã thuộc ✓</button>
+                  <button onClick="{{ nextCard }}" style="padding:12px 20px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;color:#64748b;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer">Tiếp →</button>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isStatsScreen }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <sc-if value="{{ isEmptyOverall }}" hint-placeholder-val="{{ false }}">
+          <div style="text-align:center;padding:80px 20px;color:#94a3b8;font-size:14px">Thêm từ vựng để xem thống kê.</div>
+        </sc-if>
+        <sc-if value="{{ hasWords }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px">
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:22px;text-align:center">
+                <div style="font-size:32px;font-weight:800;color:#1e293b">{{ totalCount }}</div>
+                <div style="font-size:13px;color:#64748b;margin-top:4px">Tổng số từ</div>
+              </div>
+              <div style="background:{{ successSoft }};border:1px solid #e2e8f0;border-radius:14px;padding:22px;text-align:center">
+                <div style="font-size:32px;font-weight:800;color:{{ success }}">{{ knownCount }}</div>
+                <div style="font-size:13px;color:#64748b;margin-top:4px">Đã thuộc</div>
+              </div>
+              <div style="background:{{ accentSoft }};border:1px solid #e2e8f0;border-radius:14px;padding:22px;text-align:center">
+                <div style="font-size:32px;font-weight:800;color:{{ accent }}">{{ knownPercent }}%</div>
+                <div style="font-size:13px;color:#64748b;margin-top:4px">Tiến độ hoàn thành</div>
+              </div>
+            </div>
+            <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:14px">Theo chủ đề</div>
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <sc-for list="{{ topicStats }}" as="ts" hint-placeholder-count="3">
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:13px;color:#334155;margin-bottom:6px">
+                    <span style="font-weight:600">{{ ts.topic }}</span>
+                    <span style="color:#94a3b8">{{ ts.known }}/{{ ts.total }}</span>
+                  </div>
+                  <div style="background:#f1f5f9;border-radius:6px;height:8px;overflow:hidden">
+                    <div style="background:{{ accent }};height:100%;border-radius:6px;width:{{ ts.pct }}%"></div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: 1100, &quot;height&quot;: 800}, &quot;accentColor&quot;: {&quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: &quot;oklch(58% 0.16 255)&quot;, &quot;tsType&quot;: &quot;string&quot;}, &quot;shuffleReview&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;}, &quot;showIPA&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;}}">
+const STORAGE_KEY = 'vocab_words_v1';
+const DRIVE_CLIENT_ID = '408690735220-monnc90hu3ov36oevfpa93bkh49t49s5.apps.googleusercontent.com';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+const DRIVE_FILE_NAME = 'vocab_words.json';
+const emptyForm = { word: '', ipa: '', pos: 'danh từ', meaning: '', example: '', topic: '', level: 'Cơ bản' };
+
+class Component extends DCLogic {
+  state = {
+    words: [],
+    screen: 'list',
+    showAddForm: false,
+    editingId: null,
+    form: { ...emptyForm },
+    search: '',
+    topicFilter: 'all',
+    levelFilter: 'all',
+    reviewQueue: [],
+    reviewIndex: 0,
+    flipped: false,
+    reviewTopicFilter: 'all',
+    reviewKnownFilter: 'all',
+    driveSignedIn: false,
+    driveEmail: null,
+    syncStatus: 'idle',
+  };
+
+  accessToken = null;
+  driveFileId = null;
+  tokenClient = null;
+  saveTimer = null;
+
+  componentDidMount() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) this.setState({ words: JSON.parse(raw) });
+    } catch (e) {}
+    this.waitForGis();
+  }
+
+  waitForGis = () => {
+    if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+      this.tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: DRIVE_CLIENT_ID,
+        scope: DRIVE_SCOPE,
+        callback: (resp) => {
+          if (resp && resp.access_token) {
+            this.accessToken = resp.access_token;
+            this.setState({ driveSignedIn: true, syncStatus: 'syncing' });
+            this.syncFromDrive();
+          }
+        },
+      });
+    } else {
+      setTimeout(this.waitForGis, 300);
+    }
+  };
+
+  toggleDrive = () => {
+    if (this.state.driveSignedIn) {
+      if (this.accessToken && window.google) {
+        window.google.accounts.oauth2.revoke(this.accessToken, () => {});
+      }
+      this.accessToken = null;
+      this.driveFileId = null;
+      this.setState({ driveSignedIn: false, driveEmail: null, syncStatus: 'idle' });
+    } else if (this.tokenClient) {
+      this.tokenClient.requestAccessToken();
+    }
+  };
+
+  async driveFetch(url, options = {}) {
+    const res = await fetch(url, {
+      ...options,
+      headers: { ...(options.headers || {}), Authorization: `Bearer ${this.accessToken}` },
+    });
+    if (!res.ok) throw new Error('drive request failed: ' + res.status);
+    return res;
+  }
+
+  async syncFromDrive() {
+    try {
+      const listRes = await this.driveFetch(
+        `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${encodeURIComponent("name='" + DRIVE_FILE_NAME + "'")}&fields=files(id,name)`
+      );
+      const listJson = await listRes.json();
+      const existing = (listJson.files || [])[0];
+      if (existing) {
+        this.driveFileId = existing.id;
+        const contentRes = await this.driveFetch(`https://www.googleapis.com/drive/v3/files/${existing.id}?alt=media`);
+        const remoteWords = await contentRes.json();
+        if (Array.isArray(remoteWords)) {
+          this.persist(remoteWords);
+          this.setState({ words: remoteWords });
+        }
+      } else {
+        await this.createDriveFile(this.state.words);
+      }
+      let email = null;
+      try {
+        const infoRes = await this.driveFetch('https://www.googleapis.com/oauth2/v2/userinfo');
+        const info = await infoRes.json();
+        email = info.email || null;
+      } catch (e) {}
+      this.setState({ syncStatus: 'synced', driveEmail: email });
+    } catch (e) {
+      this.setState({ syncStatus: 'error' });
+    }
+  }
+
+  async createDriveFile(words) {
+    const metadata = { name: DRIVE_FILE_NAME, parents: ['appDataFolder'] };
+    const boundary = 'vocabboundary';
+    const body =
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+      `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(words)}\r\n--${boundary}--`;
+    const res = await this.driveFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
+      method: 'POST',
+      headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
+      body,
+    });
+    const json = await res.json();
+    this.driveFileId = json.id;
+  }
+
+  scheduleDriveSave(words) {
+    if (!this.state.driveSignedIn) return;
+    clearTimeout(this.saveTimer);
+    this.setState({ syncStatus: 'syncing' });
+    this.saveTimer = setTimeout(async () => {
+      try {
+        if (!this.driveFileId) {
+          await this.createDriveFile(words);
+        } else {
+          await this.driveFetch(`https://www.googleapis.com/upload/drive/v3/files/${this.driveFileId}?uploadType=media`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(words),
+          });
+        }
+        this.setState({ syncStatus: 'synced' });
+      } catch (e) {
+        this.setState({ syncStatus: 'error' });
+      }
+    }, 1200);
+  }
+
+  persist(words) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(words)); } catch (e) {}
+  }
+
+  updateWords(words) {
+    this.persist(words);
+    const validIds = new Set(words.map(w => w.id));
+    const reviewQueue = this.state.reviewQueue.filter(id => validIds.has(id));
+    this.setState({ words, reviewQueue, reviewIndex: Math.min(this.state.reviewIndex, Math.max(reviewQueue.length - 1, 0)) });
+    this.scheduleDriveSave(words);
+  }
+
+  goList = () => this.setState({ screen: 'list' });
+  goReview = () => {
+    this.setState({ screen: 'review' });
+    if (this.state.reviewQueue.length === 0) this.startReview();
+  };
+  goStats = () => this.setState({ screen: 'stats' });
+
+  toggleAddForm = () => {
+    if (this.state.showAddForm) {
+      this.setState({ showAddForm: false, editingId: null, form: { ...emptyForm } });
+    } else {
+      this.setState({ showAddForm: true, editingId: null, form: { ...emptyForm } });
+    }
+  };
+  cancelForm = () => this.setState({ showAddForm: false, editingId: null, form: { ...emptyForm } });
+
+  onFormField(key, value) {
+    this.setState({ form: { ...this.state.form, [key]: value } });
+  }
+
+  submitForm = () => {
+    const f = this.state.form;
+    if (!f.word.trim() || !f.meaning.trim()) return;
+    let words;
+    if (this.state.editingId) {
+      words = this.state.words.map(w => w.id === this.state.editingId ? { ...w, ...f } : w);
+    } else {
+      words = [...this.state.words, { id: Date.now() + Math.random(), ...f, known: false, addedAt: Date.now() }];
+    }
+    this.updateWords(words);
+    this.setState({ showAddForm: false, editingId: null, form: { ...emptyForm } });
+  };
+
+  editWord(id) {
+    const w = this.state.words.find(x => x.id === id);
+    if (!w) return;
+    this.setState({
+      showAddForm: true,
+      editingId: id,
+      form: { word: w.word, ipa: w.ipa || '', pos: w.pos, meaning: w.meaning, example: w.example || '', topic: w.topic || '', level: w.level },
+    });
+  }
+
+  removeWord(id) {
+    this.updateWords(this.state.words.filter(w => w.id !== id));
+  }
+
+  toggleKnown(id) {
+    this.updateWords(this.state.words.map(w => w.id === id ? { ...w, known: !w.known } : w));
+  }
+
+  onSearchChange = (e) => this.setState({ search: e.target.value });
+  onTopicFilterChange = (e) => this.setState({ topicFilter: e.target.value });
+  onLevelFilterChange = (e) => this.setState({ levelFilter: e.target.value });
+  onReviewTopicChange = (e) => { this.setState({ reviewTopicFilter: e.target.value }); setTimeout(this.startReview, 0); };
+  onReviewKnownChange = (e) => { this.setState({ reviewKnownFilter: e.target.value }); setTimeout(this.startReview, 0); };
+
+  startReview = () => {
+    let pool = this.state.words.slice();
+    if (this.state.reviewTopicFilter !== 'all') pool = pool.filter(w => (w.topic || '') === this.state.reviewTopicFilter);
+    if (this.state.reviewKnownFilter === 'known') pool = pool.filter(w => w.known);
+    if (this.state.reviewKnownFilter === 'unknown') pool = pool.filter(w => !w.known);
+    if (this.props.shuffleReview ?? true) {
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+    }
+    this.setState({ reviewQueue: pool.map(w => w.id), reviewIndex: 0, flipped: false });
+  };
+
+  flipCard = () => this.setState({ flipped: !this.state.flipped });
+  nextCard = () => {
+    const q = this.state.reviewQueue;
+    this.setState({ reviewIndex: Math.min(this.state.reviewIndex + 1, q.length - 1), flipped: false });
+  };
+  prevCard = () => this.setState({ reviewIndex: Math.max(this.state.reviewIndex - 1, 0), flipped: false });
+  markKnown = () => {
+    const id = this.state.reviewQueue[this.state.reviewIndex];
+    if (id != null) this.updateWords(this.state.words.map(w => w.id === id ? { ...w, known: true } : w));
+    this.nextCard();
+  };
+  markUnknown = () => {
+    const id = this.state.reviewQueue[this.state.reviewIndex];
+    if (id != null) this.updateWords(this.state.words.map(w => w.id === id ? { ...w, known: false } : w));
+    this.nextCard();
+  };
+
+  renderVals() {
+    const accent = this.props.accentColor || 'oklch(58% 0.16 255)';
+    const accentDark = 'oklch(46% 0.16 255)';
+    const accentSoft = 'oklch(94% 0.03 255)';
+    const success = 'oklch(55% 0.13 150)';
+    const successSoft = 'oklch(95% 0.03 150)';
+    const danger = 'oklch(55% 0.17 25)';
+    const dangerSoft = 'oklch(95% 0.03 25)';
+    const showIPA = this.props.showIPA ?? true;
+
+    const { words, screen, search, topicFilter, levelFilter } = this.state;
+
+    const topics = [...new Set(words.map(w => w.topic).filter(Boolean))];
+
+    const tabActive = { background: accent, colorTxt: '#fff' };
+    const tabInactive = { background: 'transparent', colorTxt: '#64748b' };
+    const tabBg = {
+      list: screen === 'list' ? tabActive.background : tabInactive.background,
+      review: screen === 'review' ? tabActive.background : tabInactive.background,
+      stats: screen === 'stats' ? tabActive.background : tabInactive.background,
+    };
+    const tabColor = {
+      list: screen === 'list' ? tabActive.colorTxt : tabInactive.colorTxt,
+      review: screen === 'review' ? tabActive.colorTxt : tabInactive.colorTxt,
+      stats: screen === 'stats' ? tabActive.colorTxt : tabInactive.colorTxt,
+    };
+    const tabBgHover = {
+      list: screen === 'list' ? tabActive.background : '#e2e8f0',
+      review: screen === 'review' ? tabActive.background : '#e2e8f0',
+      stats: screen === 'stats' ? tabActive.background : '#e2e8f0',
+    };
+
+    const searchLower = search.trim().toLowerCase();
+    let filteredWords = words.filter(w => {
+      if (searchLower && !(w.word.toLowerCase().includes(searchLower) || w.meaning.toLowerCase().includes(searchLower))) return false;
+      if (topicFilter !== 'all' && (w.topic || '') !== topicFilter) return false;
+      if (levelFilter !== 'all' && w.level !== levelFilter) return false;
+      return true;
+    }).map(w => ({
+      ...w,
+      hasIpa: !!(w.ipa && w.ipa.trim() && showIPA),
+      hasExample: !!(w.example && w.example.trim()),
+      hasTopic: !!(w.topic && w.topic.trim()),
+      knownLabel: w.known ? 'Đã thuộc ✓' : 'Chưa thuộc',
+      knownBg: w.known ? successSoft : '#f8fafc',
+      knownColor: w.known ? success : '#94a3b8',
+      knownBorder: w.known ? successSoft : '#e2e8f0',
+      toggleKnown: () => this.toggleKnown(w.id),
+      edit: () => this.editWord(w.id),
+      remove: () => this.removeWord(w.id),
+    }));
+
+    const totalCount = words.length;
+    const knownCount = words.filter(w => w.known).length;
+    const knownPercent = totalCount ? Math.round((knownCount / totalCount) * 100) : 0;
+    const topicStats = topics.map(t => {
+      const inTopic = words.filter(w => w.topic === t);
+      const known = inTopic.filter(w => w.known).length;
+      return { topic: t, total: inTopic.length, known, pct: inTopic.length ? Math.round((known / inTopic.length) * 100) : 0 };
+    });
+
+    const queue = this.state.reviewQueue;
+    const idx = this.state.reviewIndex;
+    const currentId = queue[idx];
+    const currentWord = currentId != null ? words.find(w => w.id === currentId) : null;
+    const currentCard = currentWord ? {
+      ...currentWord,
+      hasIpa: !!(currentWord.ipa && currentWord.ipa.trim() && showIPA),
+      hasExample: !!(currentWord.example && currentWord.example.trim()),
+    } : null;
+
+    const driveLabels = {
+      idle: 'Đăng nhập Google Drive',
+      syncing: 'Đang đồng bộ...',
+      synced: `✓ ${this.state.driveEmail || 'Đã đồng bộ'}`,
+      error: 'Lỗi đồng bộ — thử lại',
+    };
+    const driveButtonLabel = this.state.driveSignedIn ? driveLabels[this.state.syncStatus] || driveLabels.idle : driveLabels.idle;
+    const driveButtonBg = this.state.driveSignedIn ? successSoft : '#fff';
+    const driveButtonColor = this.state.driveSignedIn ? success : '#334155';
+    const driveButtonBorder = this.state.driveSignedIn ? successSoft : '#e2e8f0';
+
+    return {
+      driveButtonLabel, driveButtonBg, driveButtonColor, driveButtonBorder, toggleDrive: this.toggleDrive,
+      accent, accentDark, accentSoft, success, successSoft, danger, dangerSoft, showIPA,
+      isListScreen: screen === 'list',
+      isReviewScreen: screen === 'review',
+      isStatsScreen: screen === 'stats',
+      goList: this.goList, goReview: this.goReview, goStats: this.goStats,
+      tabBg, tabColor, tabBgHover,
+      search, topicFilter, levelFilter, topics,
+      onSearchChange: this.onSearchChange, onTopicFilterChange: this.onTopicFilterChange, onLevelFilterChange: this.onLevelFilterChange,
+      showAddForm: this.state.showAddForm,
+      toggleAddForm: this.toggleAddForm, cancelForm: this.cancelForm, submitForm: this.submitForm,
+      addButtonLabel: this.state.showAddForm ? 'Đóng' : '+ Thêm từ mới',
+      submitLabel: this.state.editingId ? 'Lưu thay đổi' : 'Thêm từ',
+      form: this.state.form,
+      onFormChange_word: (e) => this.onFormField('word', e.target.value),
+      onFormChange_ipa: (e) => this.onFormField('ipa', e.target.value),
+      onFormChange_pos: (e) => this.onFormField('pos', e.target.value),
+      onFormChange_meaning: (e) => this.onFormField('meaning', e.target.value),
+      onFormChange_example: (e) => this.onFormField('example', e.target.value),
+      onFormChange_topic: (e) => this.onFormField('topic', e.target.value),
+      onFormChange_level: (e) => this.onFormField('level', e.target.value),
+      hasWords: filteredWords.length > 0,
+      noResultsAfterFilter: filteredWords.length === 0 && words.length > 0,
+      isEmptyOverall: words.length === 0,
+      filteredWords,
+      reviewTopicFilter: this.state.reviewTopicFilter,
+      reviewKnownFilter: this.state.reviewKnownFilter,
+      onReviewTopicChange: this.onReviewTopicChange, onReviewKnownChange: this.onReviewKnownChange,
+      startReview: this.startReview,
+      reviewQueueEmpty: queue.length === 0,
+      hasCurrentCard: !!currentCard,
+      currentCard,
+      cardKey: `${currentId}-${this.state.flipped}`,
+      isFront: !this.state.flipped,
+      isBack: this.state.flipped,
+      progressLabel: queue.length ? `${idx + 1} / ${queue.length}` : '',
+      flipCard: this.flipCard, nextCard: this.nextCard, prevCard: this.prevCard,
+      markKnown: this.markKnown, markUnknown: this.markUnknown,
+      totalCount, knownCount, knownPercent, topicStats,
+    };
+  }
+}
+</script>
+</body>
+</html>
